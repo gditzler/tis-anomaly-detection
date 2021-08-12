@@ -23,6 +23,13 @@ import numpy as np
 import pickle
 
 def read_result_file(file_path:str): 
+    """load the result file. 
+
+    Parameters 
+    ----------
+    file_path : str 
+        Path to the result file you want to load. 
+    """
     data = pickle.load(open(file_path, 'rb'))
     threshold = data['run_0']['threshold']
     errs_normal = data['run_0']['unseennormal_err']
@@ -30,7 +37,16 @@ def read_result_file(file_path:str):
     errs_train =  data['run_0']['trainingerrors']
     return threshold, errs_attack, errs_normal, errs_train
 
-def label_window(yhat, window_size:int=3): 
+def label_window(yhat:np.ndarray, window_size:int=3): 
+    """convert the stream of individual predictions to a majority vote over a window 
+
+    Parameters
+    ----------
+    yhat : np.ndarray 
+        Sequence of detection results in [0, 1]
+    window_size : int 
+        Size of the window for the majority vote. MAKE THIS AN ODD NUMBER! 
+    """
     N = len(yhat)
     threshold = np.ceil(window_size/2)
     yhat_hat = []
@@ -48,7 +64,18 @@ def label_window(yhat, window_size:int=3):
     score_hat = np.array(score_hat)
     return yhat_hat, score_hat
 
-def get_rates(ys, yhats, verbose:bool=False):
+def get_rates(ys:np.ndarray, yhats:np.ndarray, verbose:bool=False):
+    """compute the binary classification statistics 
+
+    Parameters 
+    ----------
+    ys : np.ndarray 
+        Ground truth labels in [0, 1]
+    yhats : np.ndarray
+        Predictions in [0, 1]
+    verbose : bool 
+        Print stuff out? default = False  
+    """
     tp, tn, fp, fn = 0., 0., 0., 0.
     for y, yhat in zip(ys, yhats): 
         if  y == 1 and yhat == 1: 
@@ -65,12 +92,12 @@ def get_rates(ys, yhats, verbose:bool=False):
     prev = (tp+fn)/(tp+tn+fp+fn)
     reca = tp/(tp+fn)
     fm = 2*prec*reca/(prec+reca)
+
     if verbose: 
         print(''.join(['Accuracy: ', str(acc)]))
         print(''.join(['Precision: ', str(prec)]))
         print(''.join(['Recall: ', str(reca)]))
         print(''.join(['F-score: ', str(fm)]))
         print(''.join(['Prevelance: ', str(prev)]))
-
 
     return acc, prec, prev, reca, fm 
